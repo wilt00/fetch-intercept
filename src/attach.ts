@@ -4,15 +4,19 @@ type IFetchParams = Parameters<IFetch>;
 export type FetchInterceptorResponse = Response & { request?: Request };
 
 export interface FetchInterceptor {
-  request?: (...args: IFetchParams) => IFetchParams;
-  requestError?: (error: Error) => Promise<never> | never;
-  response?: (response: FetchInterceptorResponse) => FetchInterceptorResponse;
-  responseError?: (error: Error) => Promise<never> | never;
+  request?: (...args: IFetchParams) => Promise<IFetchParams> | IFetchParams;
+  requestError?: (error: Error) => Promise<IFetchParams> | IFetchParams;
+  response?: (
+    response: FetchInterceptorResponse
+  ) => Promise<FetchInterceptorResponse> | FetchInterceptorResponse;
+  responseError?: (error: Error) => Promise<FetchInterceptorResponse> | FetchInterceptorResponse;
 }
 
-let interceptors: FetchInterceptor[] = [];
-
-function interceptor(fetch: IFetch, ...args: IFetchParams): Promise<Response> {
+function interceptor(
+  fetch: IFetch,
+  interceptors: FetchInterceptor[],
+  ...args: IFetchParams
+): Promise<Response> {
   const reversedInterceptors = interceptors.reverse();
 
   let requestPromise: Promise<IFetchParams> = Promise.resolve(args);
@@ -56,9 +60,12 @@ function interceptor(fetch: IFetch, ...args: IFetchParams): Promise<Response> {
 }
 
 export default function attach(env: typeof globalThis) {
+  const originalFetch = env.fetch;
+  let interceptors: FetchInterceptor[] = [];
+
   function wrapFetch(fetch: IFetch) {
     return function (...args: IFetchParams) {
-      return interceptor(fetch, ...args);
+      return interceptor(fetch, interceptors, ...args);
     };
   }
 
@@ -76,9 +83,18 @@ export default function attach(env: typeof globalThis) {
     interceptors = [];
   }
 
+  function detach() {
+    clear();
+    env.fetch = originalFetch;
+  }
+
   const wrappedFetch = wrapFetch(env.fetch);
-  Object.assign(wrappedFetch, { _register: register, _clear: clear });
+  Object.assign(wrappedFetch, {
+    _register: register,
+    _clear: clear,
+    _fetch: originalFetch,
+  });
   env.fetch = wrappedFetch;
 
-  return { register, clear };
+  return { register, clear, detach };
 }
