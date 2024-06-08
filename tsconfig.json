@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "esModuleInterop": true,
+    "outDir": "lib",
+    "strict": true
+  },
+  "include": ["src", "test"]
+}
