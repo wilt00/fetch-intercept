@@ -32,8 +32,9 @@ function interceptor(fetch: IFetch, ...args: IFetchParams): Promise<Response> {
     async (args) => {
       const request = new Request(...args);
       try {
+        const cloneRequest = request.clone();
         const response: FetchInterceptorResponse = await fetch(request);
-        response.request = request;
+        response.request = cloneRequest;
         return response;
       } catch (error) {
         if (typeof error === 'object' && error !== null) {
