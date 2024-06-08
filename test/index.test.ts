@@ -2,7 +2,6 @@
  * @jest-environment jsdom
  */
 import { beforeEach, describe, expect, it } from '@jest/globals';
-
 import 'cross-fetch/polyfill';
 import fetchInterceptor from '../src/browser';
 
@@ -75,7 +74,7 @@ describe('fetch-intercept', function () {
       expect(interceptions).toStrictEqual([2, 1]);
       done();
     });
-  })
+  });
 
   it('should support mixed interceptors', (done) => {
     let interceptions: number[] = [];
@@ -109,7 +108,7 @@ describe('fetch-intercept', function () {
       },
     });
 
-    fetch('http://404', {
+    fetch('', {
       mode: 'no-cors',
     }).catch(function () {
       expect(responseIntercepted).toBe(true);
